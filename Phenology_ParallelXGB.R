@@ -5,9 +5,9 @@ library(rMR)
 library(glue)
 library(xgboost)
 
-source("ignore_sigpipe.R")
-source("noaa_mean_forecast.R")
-source("noaa_mean_historical.R")
+source("R/ignore_sigpipe.R")
+source("R/noaa_mean_forecast.R")
+source("R/noaa_mean_historical.R")
 
 forecast_date <- Sys.Date()
 forecast_doy = as.numeric(format(forecast_date, '%j'))
@@ -17,11 +17,13 @@ noaa_date <- Sys.Date() - days(1)  #Need to use yesterday's NOAA forecast becaus
 model_id <- "xgboost_parallel"
 
 # Step 1: Download latest target data and site description data
-target <- readr::read_csv(paste0("https://data.ecoforecast.org/neon4cast-targets/",
-                                 "aquatics/aquatics-targets.csv.gz"), guess_max = 1e6)
-site_data <- readr::read_csv(paste0("https://raw.githubusercontent.com/eco4cast/neon4cast-targets/",
-                                    "main/NEON_Field_Site_Metadata_20220412.csv")) |> 
-  dplyr::filter(aquatics == 1)
+target <- readr::read_csv("https://data.ecoforecast.org/neon4cast-targets/phenology/phenology-targets.csv.gz", guess_max = 1e6) |> 
+  na.omit()
+site_data <- readr::read_csv("https://raw.githubusercontent.com/eco4cast/neon4cast-targets/main/NEON_Field_Site_Metadata_20220412.csv") |> 
+  dplyr::filter(phenology == 1)
+
+
+target_names <- c("gcc_90", "rcc_90")
 
 # Step 2: Get meteorological predictions as drivers
 df_past <- neon4cast::noaa_stage3()
@@ -31,10 +33,15 @@ df_past <- neon4cast::noaa_stage3()
 #   filter(variable %in% c("oxygen", "temperature", "chla")) |>
 #   count(site_id) |> filter(n==3) |> pull(site_id)
 sites <- target |> na.omit() |> distinct(site_id, variable) |> 
-  filter(variable %in% c("oxygen", "temperature", "chla")) |> count(site_id) |> filter(n>=1) |> pull(site_id)
+  filter(variable %in% target_names) |> count(site_id) |> filter(n>=1) |> pull(site_id)
+
+
+# Make sure assumptions are clarified 
 
 # Define the forecasts model for a site
-forecast_site <- function(site) {
+forecast_site <- function(site, target_names) {
+  
+  #target_names <- c("gcc_90", "rcc_90")
   
   message(paste0("Running site: ", site))
   weather_vars = c("TMP", "DSWRF", "RH")
@@ -55,7 +62,7 @@ forecast_site <- function(site) {
   # Merge in past NOAA data into the targets file, matching by date.
   site_target <- target |>
     dplyr::select(datetime, site_id, variable, observation) |>
-    dplyr::filter(variable %in% c("temperature", "oxygen", "chla"),
+    dplyr::filter(variable %in% target_names,
                   site_id == site) |>
     tidyr::pivot_wider(names_from = "variable", values_from = "observation") |>
     dplyr::left_join(noaa_past_mean, by = c("datetime"))
@@ -190,12 +197,12 @@ forecast_site <- function(site) {
 }
 
 # Run all sites -- may be slow!
-forecast <- map_dfr(sites, forecast_site)
+forecast <- map_dfr(sites, forecast_site, target_names)
 
 #Forecast output file name in standards requires for Challenge.
 # csv.gz means that it will be compressed
 file_date <- Sys.Date() 
-forecast_file <- paste0("aquatics","-",file_date,"-",model_id,".csv.gz")
+forecast_file <- paste0("phenology","-",file_date,"-",model_id,".csv.gz")
 
 #Write csv to disk
 write_csv(forecast, forecast_file)
