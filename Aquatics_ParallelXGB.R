@@ -51,7 +51,7 @@ write_csv(forecast, forecast_file)
 neon4cast::forecast_output_validator(forecast_file)
 
 # Submit forecast
-#neon4cast::submit(forecast_file = forecast_file, metadata = NULL, ask = FALSE)
+neon4cast::submit(forecast_file = forecast_file, metadata = NULL, ask = FALSE)
 
 # -------------------------------------------------------------------------
 
