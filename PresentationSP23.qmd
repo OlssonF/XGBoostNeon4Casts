@@ -2,23 +2,23 @@
 title: "Using Gradient-Boosted Machine Learning Models to Forecast Lake Water Quality"
 author: "Greg Harrison"
 format: revealjs
-cite-method: biblatex
+bibliography: references.bib
 editor: visual
 ---
 
 ## NEON Forecasting Challenge
 
--   Forecasting in ecology has potential to improve natural resource management and advance predictive theory.
--   To help realize this potential, the Ecological Forecasting Initiative is hosting a data science challenge to accurately forecast observations at National Ecological Observatory Network (NEON) sites across the U.S.
+-   Ecological forecasting could improve natural resource management and advance predictive theory.
+-   The Ecological Forecasting Initiative is hosting a data science challenge to accurately forecast observations at NEON sites across the U.S.
 -   Focused on aquatics theme, generating 1- to 30-day ahead forecasts of water temperature, dissolved oxygen, and chlorophyll-a at 24 lakes and streams.
 -   Contributes to a growing set of automated forecasting models that will be used to quantify the boundaries prediction in ecology.
 
-```{=html}
-<!--Neon forecasting challenge Neon Satelite Image of the two lakes What is the point of doing the forecasts and why are we trying a bunch of different methods
 
-Trying to predict nature, a lot of different models going the same thing-->
-```
-![](Images/NeonWorkflow.jpeg){width="541"}
+## NEON Workflow
+
+[![](Images/NeonWorkflow.jpeg){width=30%, fig-align="center"}](https://essopenarchive.org/doi/full/10.22541/essoar.167079499.99891914/v1) 
+
+Figure from [@thomas2023]
 
 ## What is XGBoost?
 
@@ -29,23 +29,18 @@ Trying to predict nature, a lot of different models going the same thing-->
 
 ## XGBoost Diagram
 
-![](Images/xgboostpicture.webp){width="544", fig-align="center"}
+[![](Images/xgboostpicture.webp){width=80%, height=80%,fig-align=\"center\"}](https://medium.com/swlh/gradient-boosting-trees-for-classification-a-beginners-guide-596b594a14ea)
+
+Figure from [@xgboost]
 
 ## Where has XGBoost been used before?
 
-XGBoost has been used to predict:
+-   Predicting groundwater levels in Selangor, Malaysia, outperforming both ANNs and SVMs [@ibrahemahmedosman2021]
 
--   Groundwater levels in Selangor, Malaysia, outperforming both ANNs and SVMs[^1]
+-   Predicting changes in ICU Covid-19 patients' sequential organ failure assessment scores [@montomoli2021]
 
--   Changes in ICU Covid-19 Patients' Sequential Organ Failure Assessment scores [^2]
+-   Predicting heart disease in clinic patients with around 91.8% accuracy [@budholiya2022]
 
--   Heart Disease in Clinic patients with around 91.8% accuracy [^3]
-
-[^1]: Ibrahem Ahmed Osman, A., Najah Ahmed, A., Chow, M. F., Feng Huang, Y., & El-Shafie, A. (2021). Extreme gradient boosting (Xgboost) model to predict the groundwater levels in Selangor Malaysia. *Ain Shams Engineering Journal*, *12*(2), 1545-1556. https://doi.org/10.1016/j.asej.2020.11.011
-
-[^2]: Montomoli, J., Romeo, L., Moccia, S., Bernardini, M., Migliorelli, L., Berardini, D., Donati, A., Carsetti, A., Bocci, M. G., Wendel Garcia, P. D., Fumeaux, T., Guerci, P., Schüpbach, R. A., Ince, C., Frontoni, E., Hilty, M. P., & Investigators, I. (2021). Machine learning using the extreme gradient boosting (XGBoost) algorithm predicts 5-day delta of SOFA score at ICU admission in COVID-19 patients. *Journal of Intensive Medicine*, *1*(2), 110-116. https://doi.org/10.1016/j.jointm.2021.09.002
-
-[^3]: Budholiya, K., Shrivastava, S. K., & Sharma, V. (2022). An optimized XGBoost based diagnostic system for effective prediction of heart disease. *Journal of King Saud University - Computer and Information Sciences*, *34*(7), 4514-4523. https://doi.org/10.1016/j.jksuci.2020.10.013
 
 ## Questions
 
@@ -61,38 +56,23 @@ XGBoost has been used to predict:
 
 ## Parallel Model
 
-![](Images/ParallelModel.png){width="544", fig-align="center"}
+![](Images/ParallelModel.png){width=80%, fig-align="center"}
 
 ## Sequential Model
 
-![](Images/SequentialModel.png){width="544", fig-align="center"}
+![](Images/SequentialModel.png){width=80%, fig-align="center"}
 
 ## Methods
 
-```{=html}
-<!--When started submitting and how many submissions do I have Explain how the different models work Github actions is the last thing,
-
-inputs drivers, talk about features of the model
-
-Whole slide about model we are using, another slide about deployment of model-->
-```
 -   Using Github actions produce a reproducible workflow that produces daily forecasts.
 -   Every day a new XGBoost model is trained for each NEON site and target variable, and then uses NOAA forecasts to predict values 30 days into the future and submits.
--   Forecasting since February 14, 2023 (n = 65)
+-   Forecasting since February 14, 2023 (65 Days)
 
-<!--Change everything to logs-->
-
-```{=html}
-<!--## Specific Lake Evaluation
-
-Look at results aggregated from Lakes Barco and Suggs, two similar lakes in northern Florida
--->
-```
 ## Focal Analysis Sites
 
-Our results will focus on Lake Suggs and Lake Barco, two similar lakes in northern Florida.
+<!--Our results will focus on Lake Suggs and Lake Barco, two similar lakes in northern Florida.-->
 
-![](Images/SUGG_BARC.png){width="544", fig-align="center"}
+![](Images/SUGG_BARC.png){width=80%, fig-align="center"}
 
 ```{r}
 library(ggplot2)
@@ -122,10 +102,23 @@ df <- df %>% dplyr::mutate(horizon = datetime-lubridate::as_datetime(reference_d
 
 ## Example Forecast
 
-This is what were analyzing
-
 ```{r}
-ggplot(df %>% filter(site_id=="SUGG") %>% filter(reference_datetime=="2023-02-21") %>% filter(model_id=="xgboost_temp_oxygen_chla_parallel")) + geom_ribbon(aes(x=horizon, ymin=quantile02.5, ymax=quantile97.5), alpha=0.5) + geom_line(aes(x=horizon, y=median)) + facet_wrap(~variable, scales = "free") + geom_point(aes(x=horizon, y=observation)) 
+df %>% filter(site_id=="SUGG",
+              reference_datetime=="2023-02-21",
+              model_id=="xgboost_temp_oxygen_chla_parallel") %>%
+  mutate(variable = ifelse(variable == "chla", "chla (ug/L)", variable),
+         variable = ifelse(variable == "oxygen", "oxygen (mg/L)", variable),
+         variable = ifelse(variable == "temperature", "temperature (C)", variable)) %>% 
+ggplot(aes(x = horizon)) +
+  geom_ribbon(aes(ymin=quantile02.5, ymax=quantile97.5) , alpha=0.5) + 
+  geom_line(aes(y=median)) + 
+  geom_point(aes(y=observation), color="blue") + 
+  facet_wrap(~variable, scales = "free") + 
+  ggtitle("Forecast for Lake Suggs generated Feb 21") + 
+  labs(y = "Value", x = "Horizon", color="Model") 
+  #scale_fill_manual(name="", values = c("95% Confidence" = "black")) + 
+  #scale_color_manual(name="", values = c("Forecast Median" = "black")) 
+  #scale_sh_manual(name="", values = c("Observed" = "black"))
 ```
 
 # Results
@@ -144,115 +137,30 @@ model_means <- combined_df %>%
 
 ```
 
-````{=html}
-<!--## Avg Model Temperature Performance
-
-```{r}
-model_means2 <- combined_df %>%   
-   group_by(model_id, horizon, variable) %>% 
-   summarise_at(c("crps","logs"), mean, na.rm = TRUE) 
-
-
-ggplot(model_means2 %>% filter(variable=="temperature"), aes(x=horizon, y=logs, color=model_id)) + geom_line() + facet_wrap(~variable)
-# plot2 <- ggplot(model_means2 %>% filter(variable=="chla"), aes(x=horizon, y=logs, color=model_id)) + geom_line() + facet_wrap(~variable) 
-# ggarrange(plot1,plot2, ncol=2, common.legend = TRUE) 
-```
--->
-
 ## Temperature
 
 ```{r}
 ggplot(model_means %>% filter(variable=="temperature") %>% filter(site_id=="BARC"), aes(x=horizon, y=logs,
-      color=model_id)) + geom_line() + facet_wrap(~variable) + facet_wrap(~variable) + ylim(0,3) +
-      theme(legend.position="bottom")
+      color=model_id)) + geom_line() + labs(x="Horizon", y="Log Score", color="Model")
 ```
-
-<!--## Avg Model Oxygen Performance
--->
-````
-
-````{=html}
-<!--```{r}
-model_means2 <- combined_df %>%   
-   group_by(model_id, horizon, variable) %>% 
-   summarise_at(c("crps","logs"), mean, na.rm = TRUE) 
-
-
-ggplot(model_means2 %>% filter(variable=="oxygen"), aes(x=horizon, y=logs, color=model_id)) + geom_line() + facet_wrap(~variable) # + ylim(0,10)
-# plot2 <- ggplot(model_means2 %>% filter(variable=="chla"), aes(x=horizon, y=logs, color=model_id)) + geom_line() + facet_wrap(~variable) 
-# ggarrange(plot1,plot2, ncol=2, common.legend = TRUE) 
-```-->
-````
 
 ## Oxygen
 
 ```{r}
 ggplot(model_means %>% filter(variable=="oxygen") %>% filter(site_id=="BARC"), aes(x=horizon, y=logs, 
-      color=model_id)) + geom_line() + facet_wrap(~variable) +  theme(legend.position="bottom") 
+      color=model_id)) + geom_line() + labs(x="Horizon", y="Log Score", color="Model")
 ```
-
-````{=html}
-<!--## Avg Model CHLA Performance
-
-```{r}
-model_means2 <- combined_df %>%   
-   group_by(model_id, horizon, variable) %>% 
-   summarise_at(c("crps","logs"), mean, na.rm = TRUE) 
-
-
-ggplot(model_means2 %>% filter(variable=="chla"), aes(x=horizon, y=logs, color=model_id)) + geom_line() + facet_wrap(~variable)
-#plot2 <- ggplot(model_means2 %>% filter(variable=="chla"), aes(x=horizon, y=logs, color=model_id)) + geom_line() + facet_wrap(~variable) 
-# ggarrange(plot1,plot2, ncol=2, common.legend = TRUE) 
-```
--->
-````
-
-<!--(Show with and without persistence What does climatology all of a sudden get amazing)-->
-
-````{=html}
-<!--## Avg Model CHLA Performance (w/o Persistence)
-
-```{r}
-ggplot(model_means2 %>% filter(variable=="chla") %>% filter(model_id != "persistenceRW"), aes(x=horizon, y=logs, color=model_id)) + geom_line() + facet_wrap(~variable)
-``` 
--->
-````
 
 ## Chlorphyll-a
 
 ```{r}
 # library(ggpubr)
-ggplot(model_means %>% filter(variable=="chla") %>% filter(site_id=="BARC"), aes(x=horizon, y=logs, color=model_id)) + geom_line() + facet_wrap(~variable) 
+ggplot(model_means %>% filter(variable=="chla") %>% filter(site_id=="BARC"), aes(x=horizon, y=logs, color=model_id)) + geom_line() + labs(x="Horizon", y="Log Score", color="Model") #  + facet_wrap(~variable)
 ```
 
-````{=html}
-<!--## Single Prediction
+## Performance of Parallel XGBoost Relative to Climatology
 
-```{r}
-ggplot(df %>% filter(site_id=="BARC") %>% filter(model_id!="persistenceRW") %>% 
-    filter(reference_datetime=="2023-03-28"), aes(x=horizon, y=prediction, color=model_id)) +
-    geom_line(aes(x=horizon, y=prediction, color=model_id)) + 
-    geom_ribbon(aes(ymin=quantile10, ymax=quantile90, fill=model_id), alpha=0.3) +
-    facet_wrap(~variable, scales = "free") 
-```
-
-## Temperature Predictions at Various Dates
-
-```{r}
-ggplot(df %>% filter(site_id=="BARC") %>% filter(variable=="temperature") %>%
-    filter(model_id!="persistenceRW") %>% 
-    filter(reference_datetime %in% c("2023-02-14", "2023-02-21","2023-02-28", "2023-03-08")) %>% 
-    filter(model_id %in% c("climatology", "flareGLM","xgboost_temp_oxygen_parallel")),
-    aes(x=horizon, y=prediction, color=model_id)) +
-    geom_line(aes(x=horizon, y=prediction, color=model_id)) + 
-    geom_ribbon(aes(ymin=quantile10, ymax=quantile90, fill=model_id), alpha=0.3) +
-    facet_wrap(~reference_datetime) 
-
-```-->
-
-## Money figure
-
-y axis: delta log off of climatology x axis: horizon, $delta$ log $2^{\Delta \log differnce}$ log probability with climatology add negative if its worse and positive if its better
+<!--y axis: delta log off of climatology x axis: horizon, $delta$ log $2^{\Delta \log differnce}$ log probability with climatology add negative if its worse and positive if its better-->
 
 ```{r}
 #model_means <- combined_df %>%   
@@ -273,30 +181,23 @@ xgb["diff"] = 2^(-(xgb$logs-clim$logs))
 ```
 
 ```{r}
-#ggplot(model_means %>% filter(site_id=="BARC") %>% filter(variable=="chla")) + geom_line(aes(horizon, logs, color=model_id))
-```
-
-```{r}
-ggplot(xgb) + geom_line(aes(xgb$horizon, xgb$diff, color=variable))+ylim(0,2) + geom_hline(yintercept = 0) + annotate("Performs better than climatology")
-
-% anything less
+moneyplot <- ggplot(xgb) + geom_line(aes(xgb$horizon, xgb$diff, color=variable)) + geom_hline(yintercept = 1) + labs(y = "Relative Density of Prediction to Climatology", x = "Horizon", color="Variable") 
+moneyplot + annotate("text", y = 1.85, x = 5, label =  "Better than Climatology") + annotate("text", y = 0.15, x = 5, label = "Worse than Climatology")   + coord_cartesian(ylim=c(0,2), xlim= c(0,34))
 ```
 
 # Other Themes
 
-<!--Phenology do mountain lake, compare to climatology, terrestrial daily and phenology for mountain lake biological station and compare to climatology-->
-````
-
 ## Mountain Lake Biological Station
 
+
 ```{r}
-mlscores <- neon4cast::combined_scores(theme="phenology", collect=FALSE)
+mlscores <- neon4cast::combined_scores(theme="terrestrial_daily", collect=FALSE)
 
 mlmodel_ids <- c("climatology", "xgboost_parallel")
 
 mldf <- mlscores %>% 
   dplyr::filter(model_id %in% mlmodel_ids) %>% 
-  dplyr::filter(reference_datetime > "2023-03-01") %>% 
+  dplyr::filter(reference_datetime > "2023-03-28") %>% 
   dplyr::collect()
 ```
 
@@ -312,11 +213,20 @@ mlmodel_means <- mldf %>%
 ```
 
 ```{r}
-ggplot(mlmodel_means %>% filter(site_id=="MLBS")%>% filter(variable=="gcc_90")) + geom_line(aes(horizon, logs, color=model_id)) + ggtitle("Mountain Lake Biological Station (gcc_90)") + labs(fill = "Model")
+ggplot(mlmodel_means %>% filter(site_id=="MLBS")%>% filter(variable=="nee")) + 
+  geom_line(aes(horizon, logs, color=model_id)) + 
+  ggtitle("Mountain Lake Biological Station (NEE)") + 
+  scale_fill_discrete(name="Experimental\nCondition", breaks=c("climatology", "xgboost_parallel"), labels=c("Climatology", "XGBoost")) + 
+  labs(y = "Log Score", x = "Horizon", color="Model") 
 ```
 
-## Conclusions
 
-Using XGBoost we are able to show strong forecasting capabilities even with minimal model inputs. Does better some variables than others, what horizons Further exploration into refining our application of this model to ecological forecasting will likely bring great results.
+
+## Conclusion
+
+- XGBoost showed potential for strong forecasting capabilities with limited model inputs
+- On average outperformed climatology on Temperature and Oxygen variables across all horizons and better than climatology on the first 18 days
+- Water temperature as a predictor for oxygen and chlorophyll-a did not improve predictions as currently designed 
+- Further exploration into refining our application of this model to ecological forecasting could be beneficial
 
 ## References
