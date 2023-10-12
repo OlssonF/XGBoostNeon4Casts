@@ -25,7 +25,8 @@ forecast_site <- function(site, target_variables, target, weather_vars, weather_
   message(predicting_vars)
   
   # Get historical weather variable values
-  noaa_past_mean <- noaa_mean_historical(df_past, weather_vars2, weather_vars, site)
+  noaa_past_mean <- noaa_mean_historical(df_past, weather_vars2, weather_vars, site) %>% 
+    filter(datetime <= forecast_date)
   
   # Merge in past NOAA data into the targets file, matching by date.
   site_target <- target |>
