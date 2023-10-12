@@ -21,7 +21,8 @@ model_id <- "xgboost_parallel"
 
 # Download latest target data and site description data
 target <- readr::read_csv(paste0("https://data.ecoforecast.org/neon4cast-targets/",
-                                 "aquatics/aquatics-targets.csv.gz"), guess_max = 1e6)
+                                 "aquatics/aquatics-targets.csv.gz"), guess_max = 1e6) %>% 
+  filter(datetime <= forecast_date)
 
 target_variables <- c("oxygen", "temperature", "chla")
 weather_vars = c("TMP", "DSWRF", "RH")
@@ -33,15 +34,20 @@ weather_vars2 = c("air_temperature", "surface_downwelling_shortwave_flux_in_air"
 df_past <- neon4cast::noaa_stage3()
 
 # We'll skip any site that doesn't have one of our target variables
-sites <- target |> na.omit() |> distinct(site_id, variable) |> 
-  filter(variable %in% target_variables) |> count(site_id) |> filter(n>=1) |> pull(site_id)
+sites <- target |>
+  na.omit() |>
+  distinct(site_id, variable) |> 
+  filter(variable %in% target_variables) |> 
+  count(site_id) |> 
+  filter(n>=1) |> 
+  pull(site_id)
 
 # Run all sites -- may be slow!
 forecast <- map_dfr(sites, forecast_site, target_variables, target, weather_vars, weather_vars2, df_past, forecast_date)
 
 # Forecast output file name in standards requires for Challenge.
 # csv.gz means that it will be compressed
-file_date <- Sys.Date() 
+file_date <- unique(forecast$reference_datetime) 
 forecast_file <- paste0(theme,"-",file_date,"-",model_id,".csv.gz")
 
 # Write csv to disk
