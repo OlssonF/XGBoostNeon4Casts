@@ -40,11 +40,13 @@ forecast_site <- function(site, target_variables, target, weather_vars, weather_
   site_target[['DOY']] <- as.numeric( format(site_target[['datetime']], '%j'))
   site_target = na.omit(site_target)
   
-  startCheck = (forecast_doy - 7) %% 365
+  # Look back 7 days from the forecast date, and extract these DOYs
+  # startCheck = (forecast_doy - 7) %% 365
+  startCheck_date = forecast_date - days(7)
+  days_check <- yday(seq.Date(startCheck_date, forecast_date, 'day'))
   
   historical <- site_target %>% 
-    filter(DOY <= forecast_doy) %>% 
-    filter(DOY > startCheck)
+    filter(DOY %in% days_check)
   
   if(nrow(historical) < 1){
     
