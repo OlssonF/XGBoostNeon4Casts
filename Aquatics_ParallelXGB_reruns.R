@@ -64,6 +64,8 @@ missed_dates <- this_year |>
 # Run forecasts ----------------------------
 for (i in 1:length(missed_dates)) {
   forecast_date <- missed_dates[i]
+  
+  message('Running ', forecast_date)
   forecast_doy = as.numeric(format(forecast_date, '%j'))
   noaa_date <- forecast_date - days(1)  #Need to use yesterday's NOAA forecast because today's is not available yet
   
