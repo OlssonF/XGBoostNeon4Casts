@@ -31,7 +31,7 @@ forecast_site <- function(site, target_variables, target, weather_vars, weather_
   # Merge in past NOAA data into the targets file, matching by date.
   site_target <- target |>
     dplyr::select(datetime, site_id, variable, observation) |>
-    dplyr::filter(variable %in% target_variables,
+    dplyr::filter(variable %in% predicting_vars$variable,
                   site_id == site) |>
     tidyr::pivot_wider(names_from = "variable", values_from = "observation") |>
     dplyr::left_join(noaa_past_mean, by = c("datetime"))
