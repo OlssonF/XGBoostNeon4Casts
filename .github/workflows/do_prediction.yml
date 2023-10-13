@@ -19,8 +19,4 @@ jobs:
         run: R -e 'source("install.R")' 
 # Point to the right path, run the right Rscript command
       - name: Run aquatic xgboost 
-        run: Rscript Aquatics_ParallelXGB.R
-      - name: Run phenology xgboost
-        run: Rscript Phenology_ParallelXGB.R
-      - name: Run terrestrial xgboost
-        run: Rscript Terrestrial_ParallelXGB.R
+        run: Rscript Aquatics_ParallelXGB_reruns.R
